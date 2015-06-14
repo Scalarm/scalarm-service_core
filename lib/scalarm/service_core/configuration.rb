@@ -31,15 +31,19 @@ module Scalarm::ServiceCore
 
     # CORS: allow all origins by default
     cattr_accessor :cors_allow_all_origins
-    allow_all_origins = true
+    self.cors_allow_all_origins = true
 
     # CORS: list of allowed origins of allow_all_origins is set to false
     cattr_accessor :cors_allowed_origins
-    allowed_origins = []
+    self.cors_allowed_origins = []
 
     # CORS: Access-Control-Allow-Credentials setting in CORS responses
     cattr_accessor :cors_allow_credentials
-    allow_credenials = true
+    self.cors_allow_credentials = true
+
+    # class << self
+    #   self.cors_allow_all_origins = true
+    # end
 
   end
 
