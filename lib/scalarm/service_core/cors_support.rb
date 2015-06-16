@@ -7,21 +7,25 @@ module Scalarm
       extend ActiveSupport::Concern
 
       def check_request_origin
-        unless request_origin_allowed?(request.env['HTTP_ORIGIN'])
-          raise "Request origin #{request.env['HTTP_ORIGIN']} not allowed"
+        @origin_allowed = request_origin_allowed?(request.headers['Origin'])
+
+        unless @origin_allowed
+          Logger.debug("Request origin #{request.headers['Origin']} not allowed")
         end
       end
 
       def add_cors_header
-        headers['Access-Control-Allow-Origin'] = request.env['HTTP_ORIGIN']
-        headers['Access-Control-Allow-Credentials'] = 'true'
-        headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE, OPTIONS'
-        headers['Access-Control-Allow-Headers'] = 'Origin, Content-Type, Accept, Authorization, Token'
-        headers['Access-Control-Max-Age'] = '1728000'
+        if @origin_allowed
+          headers['Access-Control-Allow-Origin'] = request.env['HTTP_ORIGIN']
+          headers['Access-Control-Allow-Credentials'] = 'true'
+          headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE, OPTIONS'
+          headers['Access-Control-Allow-Headers'] = 'Origin, Content-Type, Accept, Authorization, Token'
+          headers['Access-Control-Max-Age'] = '1728000'
+        end
       end
 
       def cors_preflight_check
-        if request.method == 'OPTIONS'
+        if request.method == 'OPTIONS' and @origin_allowed
           headers['Access-Control-Allow-Origin'] = request.env['HTTP_ORIGIN']
           headers['Access-Control-Allow-Credentials'] = 'true'
           headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE, OPTIONS'
@@ -33,9 +37,7 @@ module Scalarm
       end
 
       def request_origin_allowed?(origin)
-        Logger.info("origin: #{origin}")
-        Logger.info("allow all: #{Scalarm::ServiceCore::Configuration.cors_allow_all_origins}")
-        Logger.info("allowed: #{Scalarm::ServiceCore::Configuration.cors_allowed_origins} ")
+        Logger.debug("Request Origin: #{origin}")
 
         Scalarm::ServiceCore::Configuration.cors_allow_all_origins or
             Scalarm::ServiceCore::Configuration.cors_allowed_origins.include?(origin)
