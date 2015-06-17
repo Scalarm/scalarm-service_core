@@ -22,7 +22,7 @@ module Scalarm::ServiceCore
     end
 
     def register_service(service, host, port)
-      slog('IS', "Registering #{service} at address '#{host}:#{port}'")
+      Logger.info("InformationService: Registering #{service} at address '#{host}:#{port}'")
       code, body = send_request(service, {address: "#{host}:#{port}"})
 
       if code == '200'
@@ -68,7 +68,7 @@ module Scalarm::ServiceCore
       @port, @prefix = @port.split('/')
       @prefix = @prefix.nil? ? '/' : "/#{@prefix}/"
 
-      slog('IS', "sending #{request} request to the Information Service at '#{@host}:#{@port}'")
+      Logger.info("InformationService: sending #{request} request to the Information Service at '#{@host}:#{@port}'")
 
       req = if data.nil?
               Net::HTTP::Get.new(@prefix + request)
@@ -94,10 +94,8 @@ module Scalarm::ServiceCore
         #puts "#{Time.now} --- response from Information Service is #{response.code} #{response.body}"
         return response.code, response.body
       rescue Exception => e
-        slog('IS', "Exception occurred on request to Information Service: #{e.to_s}")
-        slog('IS', "================== BACKTRACE ==================")
-        slog('IS', e.backtrace.join("\n\t"))
-        slog('IS', "================== ========= ==================")
+        Logger.error("Exception occurred on request to Information Service: #{e.to_s}")
+        Logger.error(e.backtrace.join("\n\t"))
 
         raise
       end
