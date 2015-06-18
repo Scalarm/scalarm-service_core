@@ -20,11 +20,9 @@ module Scalarm
           @sm_user = nil
           @user_session = nil
 
-          @controller.instance_variable_set(:@scalarm_user).returns(@user)
-
-          # ApplicationController.any_instance.stubs(:current_user).returns(@user)
-          # ApplicationController.any_instance.stubs(:sm_user).returns(@sm_user)
-          # ApplicationController.any_instance.stubs(:user_session).returns(@user_session)
+          ApplicationController.any_instance.stubs(:current_user).returns(@user)
+          ApplicationController.any_instance.stubs(:sm_user).returns(@sm_user)
+          ApplicationController.any_instance.stubs(:user_session).returns(@user_session)
         end
 
       end
