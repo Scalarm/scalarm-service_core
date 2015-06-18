@@ -8,6 +8,7 @@
 # [session[:uuid]] to unique session id (for separate browser/clients)
 require 'active_support/concern'
 require 'action_controller/metal/mime_responds'
+require 'abstract_controller/helpers'
 
 require 'scalarm/database/model/simulation_manager_temp_password'
 
@@ -20,6 +21,10 @@ module Scalarm::ServiceCore
   module ScalarmAuthentication
     extend ActiveSupport::Concern
     include ActionController::MimeResponds
+
+    attr_reader :current_user
+    attr_reader :sm_user
+    attr_reader :user_session
 
     PROXY_HEADER = 'X-Proxy-Cert'
     TOKEN_HEADER = 'X-Scalarm-Token'
