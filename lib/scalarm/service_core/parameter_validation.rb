@@ -70,6 +70,10 @@ module Scalarm::ServiceCore
       end
     end
 
+    def validate(validators)
+      validate_params(params, validators)
+    end
+
     def method_missing(method_name, *args, &block)
       security_match = method_name.to_s.match(/security_(.*)/)
       if security_match
