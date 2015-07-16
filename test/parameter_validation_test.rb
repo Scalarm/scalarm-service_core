@@ -34,6 +34,20 @@ module Scalarm::ServiceCore
       end
     end
 
+    def test_single_param_validation_array_native
+      @dummy.single_param_validation('one', [1,2], [:array])
+    end
+
+    def test_single_param_validation_array_json
+      @dummy.single_param_validation('one', '[1,2]', [:array])
+    end
+
+    def test_single_param_validation_array_fail
+      assert_raises ParameterValidation::ValidationError do
+        @dummy.single_param_validation('one', '{"strange": [1, 2]}', [:array])
+      end
+    end
+
 
     def test_validate_params_ok_1
       params = {

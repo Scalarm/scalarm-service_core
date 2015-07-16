@@ -91,6 +91,11 @@ module Scalarm::ServiceCore
       end
     end
 
+    def array(name, value)
+      value = Utils::parse_json_if_string(value)
+      raise ValidationError.new(name, value, 'Cannot be deserialized to an array') unless value.is_a? Array
+    end
+
     def positive(name, value)
       num_value = Float value rescue raise ValidationError.new(name, value, 'Not a number')
       raise ValidationError.new(name, value, 'Not a positive number') unless num_value > 0

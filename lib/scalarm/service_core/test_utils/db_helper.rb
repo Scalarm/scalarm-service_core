@@ -26,7 +26,7 @@ module Scalarm::ServiceCore::TestUtils
         puts 'Disconnection from database failed'
       else
         db.collections.each do |collection|
-          collection.remove unless collection.name.start_with? 'system.'
+          collection.remove unless collection.name.start_with? 'system.' or collection.capped?
         end
       end
     end
