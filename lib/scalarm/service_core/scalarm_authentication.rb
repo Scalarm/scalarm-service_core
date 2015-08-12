@@ -134,7 +134,12 @@ module Scalarm::ServiceCore
         else
           Logger.debug("[authentication] using login: '#{login}'")
 
-          @current_user = ScalarmUser.authenticate_with_password(login, password)
+          begin
+            @current_user = ScalarmUser.authenticate_with_password(login, password)
+          rescue Scalarm::ServiceCore::BadLoginOrPasswordError
+            Logger.debug('[authentication] bad login or password')
+            @current_user = nil
+          end
           session[:user] = @current_user.id.to_s unless @current_user.nil?
           session[:uuid] = SecureRandom.uuid
         end

@@ -28,7 +28,8 @@ module Scalarm::ServiceCore::TestUtils
         'authentication_proxy_success',
         'authentication_proxy_fail',
         'token',
-        'basic_auth_success'
+        'basic_auth_success',
+        'basic_auth_invalid_pass'
     ]
 
     def self.define_test(base_name)
@@ -142,6 +143,23 @@ module Scalarm::ServiceCore::TestUtils
       assert_response :success, response.body
       body = JSON.parse(response.body)
       assert_equal u.id.to_s, body['user_id'], body
+    end
+
+    def _test_basic_auth_invalid_pass
+      login = 'user'
+      password = 'pass'
+
+      u = Scalarm::ServiceCore::ScalarmUser.new(login: login)
+      u.password = "#{pass}_other_wrong"
+      u.save
+
+      get '/', {}, {
+                 'HTTP_ACCEPT' => 'application/json',
+                 'HTTP_AUTHORIZATION' =>
+                     ActionController::HttpAuthentication::Basic.encode_credentials(login, password)
+             }
+
+      assert_response :unauthorized, response.body
     end
   end
 end
