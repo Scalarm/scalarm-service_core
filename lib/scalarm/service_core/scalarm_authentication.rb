@@ -219,8 +219,9 @@ module Scalarm::ServiceCore
         @current_user = ScalarmUser.find_by_id(@user_session.session_id)
         @session_auth = true unless @current_user.blank?
       else
-        flash[:error] = t('session.expired')
-        Logger.debug("[authentication] scalarm user session doesnt exist and its invalid")
+        # TODO: locale t('session.expired')
+        flash[:error] = "Session expired"
+        Logger.debug("[authentication] scalarm user session doesn't exist or its invalid")
       end
     end
 

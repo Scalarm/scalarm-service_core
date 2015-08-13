@@ -87,7 +87,8 @@ module Scalarm::ServiceCore
       regexp = Utils::get_validation_regexp(mode)
 
       if regexp.match(value).nil?
-        raise SecurityError.new(t('errors.insecure_parameter', param_name: param_name))
+        # TODO: locale t('errors.insecure_parameter')
+        raise SecurityError.new("Insecure parameter given: #{param_name}")
       end
     end
 
