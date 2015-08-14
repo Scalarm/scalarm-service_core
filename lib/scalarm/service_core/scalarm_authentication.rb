@@ -37,6 +37,14 @@ module Scalarm::ServiceCore
       @proxy_s = nil
     end
 
+    ##
+    # Override standard rest_session
+    # by adding removal of potential UserSession document from db
+    def reset_session
+      super
+      user_session.try(:destroy)
+    end
+
     # the main authentication function + session management
     def authenticate
       Logger.debug("[authentication] starting")
