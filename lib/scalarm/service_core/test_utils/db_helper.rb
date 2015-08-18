@@ -10,12 +10,17 @@ module Scalarm::ServiceCore::TestUtils
       unless Scalarm::Database::MongoActiveRecord.connected?
         begin
           connection_init = Scalarm::Database::MongoActiveRecord.connection_init('localhost', database_name)
+          ## If mongo_session is available - configure it with test database
+          if defined? MongoStore::Session
+            MongoStore::Session.database = Scalarm::Database::MongoActiveRecord.get_database(DATABASE_NAME)
+          end
         rescue Mongo::ConnectionFailure => e
           skip "Connection to database failed: #{e.to_s}"
         end
         skip 'Connection to database failed' unless connection_init
+        ## Old behavior - error on database connection failure
         #raise StandardError.new('Connection to database failed') unless connection_init
-        puts "Connecting to database #{database_name}"
+        puts "Connected with database #{database_name}"
       end
     end
 
