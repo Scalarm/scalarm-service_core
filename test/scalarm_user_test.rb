@@ -51,6 +51,28 @@ class ScalarmUserTest < MiniTest::Test
     end
   end
 
+  test 'authentication with proxy should return user for proxy if verification is skipped' do
+    password = 'x'
+    wrong_password = 'z'
+    @user.password = password
+    @user.save
+
+    proxy_s = mock 'proxy_s'
+    proxy = mock 'proxy' do
+      stubs(:valid_for_plgrid?).returns(false)
+    end
+    proxy.stubs(:username).returns(@login)
+
+    Scalarm::ServiceCore::GridProxy::Proxy.stubs(:new).with(proxy_s).returns(proxy)
+
+    # when
+    proxy_user = Scalarm::ServiceCore::ScalarmUser.authenticate_with_proxy(proxy_s, false)
+
+    # then
+    refute_nil proxy_user
+    assert_equal @user.id.to_s, proxy_user.id.to_s
+  end
+
   def test_authenticate_with_certificate_success
     dn = 'x'
     @user.dn = dn

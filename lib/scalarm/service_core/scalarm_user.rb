@@ -64,7 +64,7 @@ module Scalarm::ServiceCore
               end
 
       if !verify or proxy.valid_for_plgrid?
-        ScalarmUser.where(proxy.username).first
+        ScalarmUser.find_by_login(proxy.username)
       else
         nil
       end
