@@ -16,7 +16,7 @@ module Scalarm::ServiceCore
     def self.create_and_update_session(user_id, uuid)
       session_id = BSON::ObjectId(user_id.to_s)
       if uuid.nil?
-        uuid = session[:session_uuid] = SecureRandom.uuid
+        uuid = session[:uuid] = SecureRandom.uuid
       end
 
       session = (UserSession.where(session_id: session_id, uuid: uuid).first or
