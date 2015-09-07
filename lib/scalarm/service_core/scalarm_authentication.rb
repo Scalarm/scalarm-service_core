@@ -195,7 +195,7 @@ module Scalarm::ServiceCore
           # session saving on proxy authentication was disabled
           # session[:user] = @current_user.id.to_s unless @current_user.nil?
           # session[:uuid] = SecureRandom.uuid
-      rescue GridProxy::ProxyValidationError => e
+      rescue GP::ProxyValidationError => e
         Logger.warn "[authentication] proxy validation error: #{e}"
       rescue OpenSSL::X509::CertificateError => e
         Logger.warn "[authentication] OpenSSL error when trying to use proxy certificate: #{e}"

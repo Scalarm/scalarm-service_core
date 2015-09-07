@@ -83,7 +83,7 @@ module Scalarm::ServiceCore::TestUtils
         stubs(:username).returns('plguser')
         stubs(:dn).returns('dn')
         expects(:verify_for_plgrid!).at_least_once.
-            raises(Scalarm::ServiceCore::GridProxy::ProxyValidationError.new('test fail'))
+            raises(GP::ProxyValidationError.new('test fail'))
       end
       user_id = BSON::ObjectId.new
       scalarm_user = mock 'scalarm user' do

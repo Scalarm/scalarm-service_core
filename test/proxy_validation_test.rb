@@ -34,7 +34,7 @@ class ProxyValidationTest < MiniTest::Test
 
     proxy = Scalarm::ServiceCore::GridProxy::Proxy.new(proxy_s)
 
-    assert_raises Scalarm::ServiceCore::GridProxy::ProxyValidationError do
+    assert_raises GP::ProxyValidationError do
       proxy.verify_for_plgrid!
     end
   end
