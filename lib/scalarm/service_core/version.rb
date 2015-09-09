@@ -1,5 +1,5 @@
 module Scalarm
   module ServiceCore
-    VERSION = '0.9'
+    VERSION = '0.9.1'
   end
 end

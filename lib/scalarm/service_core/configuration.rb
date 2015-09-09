@@ -8,6 +8,9 @@ module Scalarm::ServiceCore
     DEFAULT_PROXY_CA_PATH = "#{File.dirname(__FILE__)}/../../proxy/plgrid_ca.pem"
     DEFAULT_PROXY_CRL_PATH = "#{File.dirname(__FILE__)}/../../proxy/plgrid_crl.pem"
 
+    # For proxy_crl read/write synchronization
+    @@crl_mutex = Mutex.new
+
     ##
     # Load Proxy's CA from custom location.
     # By default, bundled CA is used.
@@ -15,10 +18,9 @@ module Scalarm::ServiceCore
       @@proxy_ca = File.read(path)
     end
 
-    @@crl_mutex = Mutex.new
-
     ##
     # Load Proxy's CRL from custom location.
+    # This method is synchonized with proxy_crl read
     # By default, bundled CRL is used.
     def self.load_proxy_crl(path)
       @@crl_mutex.synchronize do
@@ -26,16 +28,18 @@ module Scalarm::ServiceCore
       end
     end
 
-    load_proxy_ca(DEFAULT_PROXY_CA_PATH)
-    load_proxy_crl(DEFAULT_PROXY_CRL_PATH)
-
+    # Get proxy_crl
+    # Synchronized with proxy_crl load and auto_update
     def self.proxy_crl
       @@crl_mutex.synchronize do
         @@proxy_crl
       end
     end
 
-    cattr_reader :proxy_crl
+    cattr_reader :proxy_ca
+
+    load_proxy_ca(DEFAULT_PROXY_CA_PATH)
+    load_proxy_crl(DEFAULT_PROXY_CRL_PATH)
 
     cattr_accessor :anonymous_login
     cattr_accessor :anonymous_password
