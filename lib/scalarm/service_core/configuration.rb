@@ -1,3 +1,5 @@
+require_relative 'logger'
+
 module Scalarm::ServiceCore
 
   class Configuration
@@ -13,17 +15,26 @@ module Scalarm::ServiceCore
       @@proxy_ca = File.read(path)
     end
 
+    @@crl_mutex = Mutex.new
+
     ##
     # Load Proxy's CRL from custom location.
     # By default, bundled CRL is used.
     def self.load_proxy_crl(path)
-      @@proxy_crl = File.read(path)
+      @@crl_mutex.synchronize do
+        @@proxy_crl = File.read(path)
+      end
     end
 
     load_proxy_ca(DEFAULT_PROXY_CA_PATH)
     load_proxy_crl(DEFAULT_PROXY_CRL_PATH)
 
-    cattr_reader :proxy_ca
+    def self.proxy_crl
+      @@crl_mutex.synchronize do
+        @@proxy_crl
+      end
+    end
+
     cattr_reader :proxy_crl
 
     cattr_accessor :anonymous_login
@@ -41,9 +52,45 @@ module Scalarm::ServiceCore
     cattr_accessor :cors_allow_credentials
     self.cors_allow_credentials = true
 
-    # class << self
-    #   self.cors_allow_all_origins = true
-    # end
+    ##
+    # Starts automatic CRL file content update from given path using separate thread
+    #
+    # It will change proxy_crl attribute every interval seconds
+    # with content from path file.
+    # On fail reading (every StandardError) the file it will leave proxy_crl untouched
+    # writing the error to Logger.
+    # On other error it will exit the thread so be careful!
+    # Function will return started thread.
+    def self.start_crl_auto_update(path, interval = 4.hours)
+      Thread.start do
+        begin
+          loop do
+            new_content = nil
+            crl_modify_date = nil
+            begin
+              new_content = File.read(path)
+              crl_modify_date = File.mtime(path)
+            rescue => error
+              Logger.error("Error reading CRL file (#{path}): #{error}\n#{error.backtrace.join("\n")}")
+            end
+
+            if new_content.nil?
+              Logger.warn('CRL content to update is nil, so it will be not updated')
+            else
+              Logger.info("Updating CRL with content from file #{path}, modified #{crl_modify_date}")
+              @@crl_mutex.synchronize do
+                @@proxy_crl = new_content
+              end
+            end
+
+            sleep(interval)
+          end
+        rescue Exception => e
+          Logger.error("Fatal error occured in auto update CRL thread: #{e}. Auto update will be terminated")
+          raise
+        end
+      end
+    end
 
   end
 
