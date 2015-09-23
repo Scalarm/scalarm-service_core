@@ -35,6 +35,30 @@ class ScalarmAuthenticationTest < MiniTest::Test
     assert_nil found_user_2
   end
 
+  class DummyController
+    include Scalarm::ServiceCore::ScalarmAuthentication
+  end
+
+  test 'authenticate by token should completely ignore session' do
+    # Given
+    token = 'some_token'
+    Scalarm::ServiceCore::ScalarmUser.new(login: "test_login", tokens: [token]).save
+
+    request = mock 'request'
+    params = mock 'params'
+    DummyController.any_instance.stubs(:request).returns(request)
+    DummyController.any_instance.stubs(:params).with(params)
+    DummyController.any_instance
+        .stubs(:get_token).with(request).returns(token)
+
+    # Expectations
+    Scalarm::ServiceCore::UserSession.expects(:create_and_update_session).with(any_parameters).never
+    DummyController.any_instance.expects(:session).never
+
+    # When
+    DummyController.new.authenticate
+  end
+
   # TODO: write DummyController tests - skipped now because of many mocking issues
 
   # class DummyController

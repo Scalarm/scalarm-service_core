@@ -50,30 +50,40 @@ module Scalarm::ServiceCore
       Logger.debug("[authentication] starting")
       @current_user = nil; @sm_user = nil; @session_auth = false; @user_session = nil
 
+      # by default, do not create session
+      update_session = false
+
       case true
+        # Token auth - stateless
         when !!(token = get_token(request))
           authenticate_with_token(token)
 
+        # Session auth (eg. cookies) - stateful
         when (not session[:user].blank?)
           authenticate_with_session
+          update_session = true
 
+        # Proxy cert auth - stateless
         when (use_proxy_auth? and proxy_provided?)
           authenticate_with_proxy
 
+        # BasicAuth - stateless
         when password_provided?
           authenticate_with_password
 
-        when certificate_provided?
-          authenticate_with_certificate
+        ## DISABLED, will be removed completely someday
+        # when certificate_provided?
+        #   authenticate_with_certificate
       end
 
       if @current_user.nil? and @sm_user.nil?
         authentication_failed
-      elsif @sm_user.nil? and not session[:user].nil?
+      elsif update_session and @sm_user.nil? and not session[:user].nil?
         @user_session = UserSession.
             create_and_update_session(session[:user], session[:uuid])
+        Logger.debug("[authentication] session updated")
       else
-        Logger.debug("[authentication] one-time authentication (without session saving)")
+        Logger.debug("[authentication] one-time authentication")
       end
 
       Logger.debug("[authentication] user_id: #{@current_user.id}") if @current_user
@@ -190,8 +200,6 @@ module Scalarm::ServiceCore
           @current_user.save
         end
 
-        puts "current: #{@current_user.id}"
-
           # session saving on proxy authentication was disabled
           # session[:user] = @current_user.id.to_s unless @current_user.nil?
           # session[:uuid] = SecureRandom.uuid
@@ -211,7 +219,6 @@ module Scalarm::ServiceCore
       if @current_user
         # token is used one time
         @current_user.destroy_token!(token)
-        validate_and_use_session
       else
         Logger.warn("Invalid token provided: #{token}")
       end
