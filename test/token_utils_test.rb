@@ -29,12 +29,11 @@ class TokenUtilsTest < MiniTest::Test
   end
 
   def test_token_generation_and_destroy
+    # Given
     require 'restclient'
 
-    user_session = Scalarm::ServiceCore::UserSession.new(
-        session_id: @user.id,
-        uuid: SecureRandom.uuid,
-        last_update: Time.now
+    user_session = Scalarm::ServiceCore::ScalarmUser.new(
+       login: "test_user"
     )
 
     url = 'url'
@@ -44,21 +43,18 @@ class TokenUtilsTest < MiniTest::Test
     assert (user_session.tokens == [] or user_session.tokens == nil),
            'User session tokens should be nil or empty array after session creation'
 
-    Scalarm::ServiceCore::UserSession.stubs(:_gen_random_token).returns(m_token)
+    Scalarm::ServiceCore::ScalarmUser.stubs(:_gen_random_token).returns(m_token)
 
-    Scalarm::ServiceCore::UserSession.stubs(:find_by_token).with(m_token).
+    Scalarm::ServiceCore::ScalarmUser.stubs(:find_by_token).with(m_token).
         returns(:user_session)
 
+    # Expectations
     user_session.expects(:destroy_token!).with(m_token).once
 
-    RestClient.expects(:post).with(
-        url,
-        payload,
-        Mocha::ParameterMatchers::HasEntries.new(
-            Scalarm::ServiceCore::ScalarmAuthentication::TOKEN_HEADER => m_token
-        )
-    )
+    # we don't care what are request parameters in this test
+    RestClient::Request.expects(:execute).with(any_parameters).once
 
+    # When
     Scalarm::ServiceCore::TokenUtils.post(url, user_session, payload)
   end
 
