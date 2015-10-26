@@ -28,20 +28,23 @@ module Scalarm::ServiceCore
       @uri = URI("#{scheme}://#{username}:#{password}@#{service_url}")
     end
 
-    def register_service(service, host, port)
-      Logger.info("InformationService: Registering #{service} at address '#{host}:#{port}'")
-      code, body = send_request(service, {address: "#{host}:#{port}"})
+    def register_service(service, url)
+      Logger.info("[InformationService]: registering '#{service}' at '#{url}'")
+      code, body = send_request(service, {address: url})
 
-      if code == '200'
-        response = JSON.parse(body)
-        puts response.inspect
-        if response['status'] == 'ok'
-          return nil, response['msg']
+      case code.to_i
+        when 200..201
+          Logger.info("[InformationService]: service '#{service}' registered at '#{url}'")
+          return nil, body
+        when 403
+          Logger.warn("[InformationService]: service '#{service}' at '#{url}' is already registered")
+          return 'error', '403'
+        when 401
+          Logger.error("[InformationService]: authentication error")
+          return 'error', '401'
         else
-          return 'error', response['msg']
-        end
-      else
-        return 'error', code
+          Logger.error("[InformationService]: unsupported code")
+          return 'error', code
       end
     end
 
@@ -106,6 +109,11 @@ module Scalarm::ServiceCore
       begin
         response = Net::HTTP.start(@uri.host, @uri.port, ssl_options) { |http| http.request(req) }
         #puts "#{Time.now} --- response from Information Service is #{response.code} #{response.body}"
+        # registering services case
+        if response.code == '201' and response['Location']
+          response.body = response['Location']
+        end
+
         return response.code, response.body
       rescue Exception => e
         Logger.error("[InformationService] Exception occurred: #{e.to_s}")

@@ -24,12 +24,12 @@ class InformationServiceTest < Minitest::Test
   end
 
   def test_get_experiment_manager_host_path
-    stub_request(:any, "https://#{@host}/information/experiment_managers").to_return(
+    stub_request(:get, "https://#{@host}/information/experiment_managers").to_return(
       body: "[\"darek.isi.edu\"]",
       headers: { 'Content-Type' => 'application/json' }
     )
 
-    stub_request(:any, "https://#{@host}/information/storage_managers").to_return(
+    stub_request(:get, "https://#{@host}/information/storage_managers").to_return(
       body: '[]',
       headers: { 'Content-Type' => 'application/json' }
     )
@@ -43,7 +43,7 @@ class InformationServiceTest < Minitest::Test
   end
 
   def test_get_incorrect_service
-    stub_request(:any, "https://#{@host}/information/experimental_resources").to_return(status: 404)
+    stub_request(:get, "https://#{@host}/information/experimental_resources").to_return(status: 404)
 
     em_list = @is2.get_list_of('experimental_resources')
 
@@ -51,10 +51,45 @@ class InformationServiceTest < Minitest::Test
   end
 
   def test_get_with_bad_gateway
-    stub_request(:any, "https://#{@host}/information/db_routers").to_return(status: 504)
+    stub_request(:get, "https://#{@host}/information/db_routers").to_return(status: 504)
 
     db_list = @is2.get_list_of('db_routers')
     assert_nil db_list
+  end
+
+  def test_registering_new_service_instance
+    stub_request(:post, "https://scalarm:scalarm@#{@host}/information/experiment_managers").
+      with(body: { address: @host }, headers: { 'Content-Type'=>'application/x-www-form-urlencoded' } ).
+      to_return(status: 201, headers: {'Location' => "https://#{@host}/information/experiment_managers/#{@host}"})
+
+    err, location = @is2.register_service('experiment_managers', @host)
+
+    assert_nil err
+    assert location == "https://#{@host}/information/experiment_managers/#{@host}"
+  end
+
+  def test_registering_existing_service_instance
+    stub_request(:post, "https://scalarm:scalarm@#{@host}/information/experiment_managers").
+      with(body: { address: @host }, headers: { 'Content-Type'=>'application/x-www-form-urlencoded' } ).
+      to_return(status: 403)
+
+    err, code = @is2.register_service('experiment_managers', @host)
+
+    assert err == 'error'
+    assert code == '403'
+  end
+
+  def test_registering_service_without_authorization
+    stub_request(:post, "https://#{@host}/information/experiment_managers").
+      with(body: { address: @host }, headers: { 'Content-Type'=>'application/x-www-form-urlencoded' } ).
+      to_return(status: 401)
+
+    is = Scalarm::ServiceCore::InformationService.new("#{@host}/information", nil, nil)
+
+    err, code = is.register_service('experiment_managers', @host)
+
+    assert err == 'error'
+    assert code == '401'
   end
 
 end
