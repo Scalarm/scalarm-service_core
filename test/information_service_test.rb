@@ -14,7 +14,7 @@ class InformationServiceTest < Minitest::Test
 
   def test_get_experiment_manager_host_port
     stub_request(:any, "https://#{@host}:11300/experiment_managers").to_return(
-      body: "[\"darek.isi.edu\"]",
+      body: "[\"#{@host}\"]",
       headers: { 'Content-Type' => 'application/json' }
     )
 
