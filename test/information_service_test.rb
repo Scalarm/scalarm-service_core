@@ -2,7 +2,6 @@ require 'minitest/autorun'
 require 'webmock/minitest'
 
 require '../lib/scalarm/service_core/information_service'
-require '../lib/scalarm/service_core/logger'
 
 class InformationServiceTest < Minitest::Test
 
@@ -90,6 +89,26 @@ class InformationServiceTest < Minitest::Test
 
     assert err == 'error'
     assert code == '401'
+  end
+
+  def test_deregistering_service_without_authorization
+    stub_request(:delete, "https://#{@host}/information/experiment_managers/#{@host}").to_return(status: 401)
+
+    is = Scalarm::ServiceCore::InformationService.new("#{@host}/information", nil, nil)
+
+    err, code = is.deregister_service('experiment_managers', @host)
+
+    assert err == 'error'
+    assert code == '401'
+  end
+
+  def test_deregistering_service
+    stub_request(:delete, "https://scalarm:scalarm@#{@host}/information/experiment_managers/#{@host}").
+        to_return(status: 200)
+
+    err, _ = @is2.deregister_service('experiment_managers', @host)
+
+    assert_nil err
   end
 
 end

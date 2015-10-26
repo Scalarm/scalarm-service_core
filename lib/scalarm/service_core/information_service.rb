@@ -1,6 +1,8 @@
 require 'openssl'
 require 'net/https'
 
+require_relative 'logger'
+
 module Scalarm::ServiceCore
   class InformationService
 
@@ -48,19 +50,17 @@ module Scalarm::ServiceCore
       end
     end
 
-    def deregister_service(service, host, port)
-      code, body = send_request(service, {address: "#{host}:#{port}"}, method: 'DELETE')
+    def deregister_service(service, url)
+      code, _ = send_request(service + '/' + url, {}, method: 'DELETE')
 
-      if code == '200'
-        response = JSON.parse(body)
-        if response['status'] == 'ok'
-          return nil, response['msg']
+      case code.to_i
+        when 200
+          return nil, nil
         else
-          return 'error', response['msg']
-        end
-      else
-        return 'error', code
+          Logger.error("[InformationService]: unsupported code")
+          return 'error', code
       end
+
     end
 
     def get_list_of(service)
@@ -97,7 +97,7 @@ module Scalarm::ServiceCore
 
       if not req.is_a?(Net::HTTP::Get)
         req.basic_auth(@username, @password)
-        req.set_form_data(data) unless data.nil?
+        req.set_form_data(data) unless data.empty?
       end
 
       if @uri.scheme == 'http'
