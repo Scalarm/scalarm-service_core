@@ -24,6 +24,7 @@ InformationService client, parameters validator and other utils.
   spec.add_development_dependency 'bundler', '~> 1.7'
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'mocha'
+  spec.add_development_dependency 'webmock'
   spec.add_dependency 'activesupport', '~> 4.1'
   spec.add_dependency 'actionpack', '~> 4.1'
   spec.add_dependency 'rest-client', '~> 1.8'
