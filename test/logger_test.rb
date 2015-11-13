@@ -9,6 +9,10 @@ class LoggerTest < MiniTest::Test
     Scalarm::ServiceCore::Logger.clear_logger
   end
 
+  def teardown
+    Scalarm::ServiceCore::Logger.clear_logger
+  end
+
   def test_delegation
     logger = mock 'logger' do
       expects(:info).with('a').once

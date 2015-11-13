@@ -20,6 +20,11 @@ module Scalarm
         @username = username
         @password = password
         @development = development
+
+
+        scheme = @development ? 'http' : 'https'
+
+        @uri = URI("#{scheme}://#{username}:#{password}@#{service_url}")
       end
 
       def register_service(service, host, port)
@@ -65,37 +70,36 @@ module Scalarm
       end
 
       def send_request(request, data = nil, opts = {})
-        @host, @port = @service_url.split(':')
-        @port, @prefix = @port.split('/')
-        @prefix = @prefix.nil? ? '/' : "/#{@prefix}/"
-
-        Logger.info("InformationService: sending #{request} request to the Information Service at '#{@host}:#{@port}'")
+        Logger.info("[InformationService]: sending #{request} request at '#{@uri}")
+        resource = @uri.path + '/' + request
 
         req = if data.nil?
-                Net::HTTP::Get.new(@prefix + request)
+                Net::HTTP::Get.new(resource)
               else
                 if opts.include?(:method) and opts[:method] == 'DELETE'
-                  Net::HTTP::Delete.new(@prefix + request)
+                  Net::HTTP::Delete.new(resource)
                 else
-                  Net::HTTP::Post.new(@prefix + request)
+                  Net::HTTP::Post.new(resource)
                 end
               end
 
-        req.basic_auth(@username, @password)
-        req.set_form_data(data) unless data.nil?
+        if not req.is_a?(Net::HTTP::Get)
+          req.basic_auth(@username, @password)
+          req.set_form_data(data) unless data.nil?
+        end
 
-        if @development
+        if @uri.scheme == 'http'
           ssl_options = {}
         else
           ssl_options = { use_ssl: true, verify_mode: OpenSSL::SSL::VERIFY_NONE }
         end
 
         begin
-          response = Net::HTTP.start(@host, @port, ssl_options) { |http| http.request(req) }
+          response = Net::HTTP.start(@uri.host, @uri.port, ssl_options) { |http| http.request(req) }
           #puts "#{Time.now} --- response from Information Service is #{response.code} #{response.body}"
           return response.code, response.body
-        rescue Exception => e
-          Logger.error("Exception occurred on request to Information Service: #{e.to_s}")
+        rescue => e
+          Logger.error("[InformationService] Exception occurred: #{e.to_s}")
           Logger.error(e.backtrace.join("\n\t"))
 
           raise
