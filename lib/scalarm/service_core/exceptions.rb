@@ -1,9 +1,11 @@
-module Scalarm::ServiceCore
-  class AuthenticationError < StandardError; end
+module Scalarm
+  module ServiceCore
+    class AuthenticationError < StandardError; end
 
-  class BadLoginOrPasswordError < AuthenticationError
-    def to_s
-      'Bad login or password'
+    class BadLoginOrPasswordError < AuthenticationError
+      def to_s
+        'Bad login or password'
+      end
     end
   end
 end
