@@ -3,7 +3,7 @@ require 'mocha/mini_test'
 
 require 'scalarm/service_core/configuration'
 
-class LoggerTest < MiniTest::Test
+class ConfigurationTest < MiniTest::Test
 
   ##
   # Check default CORS settings
