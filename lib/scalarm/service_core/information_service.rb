@@ -70,8 +70,9 @@ module Scalarm
       end
 
       def send_request(request, data = nil, opts = {})
-        Logger.info("[InformationService]: sending #{request} request at '#{@uri}")
         resource = @uri.path + '/' + request
+
+        Logger.info("[InformationService] sending request at '#{@uri.scheme}://#{@uri.host}#{resource}")
 
         req = if data.nil?
                 Net::HTTP::Get.new(resource)
