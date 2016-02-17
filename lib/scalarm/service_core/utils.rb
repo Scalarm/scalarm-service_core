@@ -19,7 +19,7 @@ module Scalarm
       def self.get_validation_regexp(mode)
         case mode
           when :default
-            /\A(\w|-)*\z/
+            /\A(\w|-|@|\.| )*\z/
 
           when :openid_id
             /\A(\w|-|\.|:|\/|=|\?)*\z/
