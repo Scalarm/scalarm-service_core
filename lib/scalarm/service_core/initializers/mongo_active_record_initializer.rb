@@ -36,9 +36,8 @@ class MongoActiveRecordInitializer
 
 
     begin
-      Scalarm::Database::MongoActiveRecord.connection_init('localhost', config['db_name'],
-                                                           username: config['auth_username'],
-                                                           password: config['auth_password'])
+      _connection_init('localhost', config)
+
     rescue Mongo::ConnectionFailure
       puts('mongo_active_record', 'Cannot connect to local mongodb - fetching mongodb adresses from IS')
       information_service = InformationService.instance
@@ -51,14 +50,22 @@ class MongoActiveRecordInitializer
         puts('init', "Fetched db_routers list: #{storage_manager_list}")
         db_router_url = storage_manager_list.sample
         puts('mongo_active_record', "Connecting to '#{db_router_url}'")
-        Scalarm::Database::MongoActiveRecord.connection_init(db_router_url, config['db_name'],
-                                                             username: config['auth_username'],
-                                                             password: config['auth_password'])
+
+        _connection_init(db_router_url, config)
       end
 
     end
 
     configure_mongo_session_if_available(config['db_name'])
+  end
+
+  def self._connection_init(host, config)
+    Scalarm::Database::MongoActiveRecord.connection_init(host, config['db_name'],
+                                                         username: config['auth_username'],
+                                                         password: config['auth_password'],
+                                                         connect_timeout: config['connect_timeout'],
+                                                         pool_size: config['pool_size'],
+                                                         pool_timeout: config['pool_timeout'])
   end
 
   def self.configure_mongo_session_if_available(db_name)
