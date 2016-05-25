@@ -32,9 +32,7 @@ module Scalarm
           if db.nil?
             puts 'Disconnection from database failed'
           else
-            db.collections.each do |collection|
-              collection.remove unless collection.name.start_with? 'system.' or collection.capped?
-            end
+            db.drop
           end
         end
       end
