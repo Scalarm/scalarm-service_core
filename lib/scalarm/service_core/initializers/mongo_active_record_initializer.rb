@@ -32,11 +32,13 @@ class MongoActiveRecordInitializer
 
     # by default, try to connect to local mongodb
     # TODO: connect to local mongodb only if list of db_routers is empty
-    puts('mongo_active_record', 'Trying to connect to localhost')
+    default_mongodb_host = config['host'] || 'localhost'
+    puts('mongo_active_record', "Trying to connect to #{default_mongodb_host}")
 
 
     begin
-      _connection_init('localhost', config)
+
+      _connection_init(default_mongodb_host, config)
 
     rescue Mongo::ConnectionFailure
       puts('mongo_active_record', 'Cannot connect to local mongodb - fetching mongodb adresses from IS')
