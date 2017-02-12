@@ -7,11 +7,15 @@ module Scalarm
         require 'scalarm/database/core/mongo_active_record'
 
         def setup(database_name=DATABASE_NAME)
-          Scalarm::Database::MongoActiveRecord.set_encryption_key('db_key')
+          db_config ||= Rails.application.secrets.database
+          default_mongodb_host = db_config['host'] || 'localhost'
+          default_mongodb_db_name = db_config['db_name'] || database_name
+
+          Scalarm::Database::MongoActiveRecord.set_encryption_key(db_config['db_secret_key'] || 'db_key')
 
           unless Scalarm::Database::MongoActiveRecord.connected?
             begin
-              connection_init = Scalarm::Database::MongoActiveRecord.connection_init('localhost', database_name)
+              connection_init = Scalarm::Database::MongoActiveRecord.connection_init(default_mongodb_host, default_mongodb_db_name)
               ## If mongo_session is available - configure it with test database
               if defined? MongoStore::Session
                 MongoStore::Session.database = Scalarm::Database::MongoActiveRecord.get_database(DATABASE_NAME)
@@ -22,19 +26,23 @@ module Scalarm
             skip 'Connection to database failed' unless connection_init
             ## Old behavior - error on database connection failure
             #raise StandardError.new('Connection to database failed') unless connection_init
-            puts "Connected with database #{database_name}"
+            puts "Connected with database '#{database_name}' on host '#{default_mongodb_host}'"
           end
         end
 
         # Drop all collections after each test case.
         def teardown(database_name=DATABASE_NAME)
-          db = Scalarm::Database::MongoActiveRecord.get_database(database_name)
+          db_config ||= Rails.application.secrets.database
+          default_mongodb_db_name = db_config['db_name'] || database_name
+
+          db = Scalarm::Database::MongoActiveRecord.get_database(default_mongodb_db_name)
           if db.nil?
             puts 'Disconnection from database failed'
           else
             db.drop
           end
         end
+
       end
     end
   end
