@@ -6,7 +6,24 @@ module Scalarm
 
         require 'scalarm/database/core/mongo_active_record'
 
+        def rails_mock
+          if not defined? Rails or Rails.methods.grep(/application/).empty?
+            secrets = mock('object')
+            secrets.stubs(:database).returns({})
+            application = mock('object')
+            application.stubs(:secrets).returns(secrets)
+
+            rails_module = Class.new(Object)
+            if not defined? Rails
+              DbHelper.const_set("Rails", rails_module)
+            end
+
+            Rails.stubs(:application).returns(application)
+          end
+        end
+
         def setup(database_name=DATABASE_NAME)
+          rails_mock
           db_config ||= Rails.application.secrets.database
           default_mongodb_host = db_config['host'] || 'localhost'
           default_mongodb_db_name = db_config['db_name'] || database_name
@@ -32,6 +49,7 @@ module Scalarm
 
         # Drop all collections after each test case.
         def teardown(database_name=DATABASE_NAME)
+          rails_mock
           db_config ||= Rails.application.secrets.database
           default_mongodb_db_name = db_config['db_name'] || database_name
 
